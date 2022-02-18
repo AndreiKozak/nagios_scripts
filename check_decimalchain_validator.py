@@ -25,17 +25,33 @@ def get_status(host):
 
     return status.json()
 
+def get_netinfo(host):
+    try:
+        netinfo = requests.get("http://" + host + "/net_info", timeout=5)
+    except Exception as ex:
+        print("CRITICAL - " + str(ex))
+        sys.exit(2)
+
+    return netinfo.json()
+
 def main():
     args = parse_args()
     status = get_status(args.host)
+    netinfo = get_netinfo(args.host)
 
+    npeers=int(netinfo['result']['n_peers'])
     latest_block_time=dateutil.parser.parse(datetime.strftime(dateutil.parser.parse(status['result']['sync_info']['latest_block_time']), '%Y-%m-%dT%H:%M:%S'))
     latest_block_height=status['result']['sync_info']['latest_block_height']
     catching_up=status['result']['sync_info']['catching_up']
     votingpower=int(status['result']['validator_info']['voting_power'])
     now = datetime.utcnow()
     delta = now - latest_block_time
-    state=f'Voting power: {votingpower}, Is catching up: {catching_up}, Latest block: {latest_block_height}, Latest block time: {latest_block_time}, delta: {delta}'
+    state=f'Voting power: {votingpower}, Is catching up: {catching_up}, Latest block: {latest_block_height}, Latest block time: {latest_block_time}, delta: {delta}, Peers connected: {npeers}'
+    npeersstate=f'Only {npeers} peers is connected!, '
+
+    if npeers <= 3:
+        print("CRITICAL - Status:" + npeersstate + state)
+        sys.exit(2)
 
     if delta.seconds >= 30:
         print("CRITICAL - Status: Delta is too big!, " + state)

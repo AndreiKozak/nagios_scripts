@@ -10,10 +10,13 @@ import dateutil.parser
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-H", "--host", help="Hostname or IP address of the node to check, e.g. 127.0.0.1:8841, domain.com:1234")
+    parser.add_argument("-t", "--delta", "--delay", type=int, help="Time Delay (Delta) between server's time and latest block time.")
     args = parser.parse_args()
     if args.host is None:
         print ("Server is not set, exiting.")
         sys.exit(2)
+    if args.delta is None:
+        args.delta = 30
     return args
 
 def get_status(host):
@@ -38,22 +41,22 @@ def main():
     args = parse_args()
     status = get_status(args.host)
     netinfo = get_netinfo(args.host)
+    delay = args.delta
 
     npeers=int(netinfo['result']['n_peers'])
     latest_block_time=dateutil.parser.parse(datetime.strftime(dateutil.parser.parse(status['result']['sync_info']['latest_block_time']), '%Y-%m-%dT%H:%M:%S'))
     latest_block_height=status['result']['sync_info']['latest_block_height']
     catching_up=status['result']['sync_info']['catching_up']
     votingpower=int(status['result']['validator_info']['voting_power'])
-    now = datetime.utcnow()
+    now = datetime.utcnow().replace(microsecond=0)
     delta = now - latest_block_time
-    state=f'Voting power: {votingpower}, Is catching up: {catching_up}, Latest block: {latest_block_height}, Latest block time: {latest_block_time}, delta: {delta}, Peers connected: {npeers}'
-    npeersstate=f'Only {npeers} peers is connected!, '
+    state=f'Voting power: {votingpower}, Latest block: {latest_block_height}, Latest block time: {latest_block_time}, delta: {delta}, Peers connected: {npeers}'
+    npeersstate=f'Only {npeers} peers connected!, '
 
     if npeers <= 3:
-        print("CRITICAL - Status:" + npeersstate + state)
+        print("CRITICAL - Status: " + npeersstate + state)
         sys.exit(2)
-
-    if delta.seconds >= 30:
+    elif delta.seconds >= delay:
         print("CRITICAL - Status: Delta is too big!, " + state)
         sys.exit(2)
 

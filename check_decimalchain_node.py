@@ -25,6 +25,7 @@ def get_status(host):
     except Exception as ex:
         print("CRITICAL - " + str(ex))
         sys.exit(2)
+
     return status.json()
 
 def get_netinfo(host):
@@ -45,7 +46,7 @@ def main():
     npeers=int(netinfo['result']['n_peers'])
     latest_block_time=dateutil.parser.parse(datetime.strftime(dateutil.parser.parse(status['result']['sync_info']['latest_block_time']), '%Y-%m-%dT%H:%M:%S'))
     latest_block_height=status['result']['sync_info']['latest_block_height']
-    now = datetime.utcnow()
+    now = datetime.utcnow().replace(microsecond=0)
     delta = now - latest_block_time
     state=f'Latest block: {latest_block_height}, Latest block time: {latest_block_time}, delta: {delta}, Peers connected: {npeers}'
 

@@ -9,14 +9,10 @@ import dateutil.parser
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-H", "--host", help="Hostname or IP address of the node to check, e.g. 127.0.0.1:8841, domain.com:1234")
-    parser.add_argument("-t", "--delta", "--delay", type=int, help="Time Delay (Delta) between server's time and latest block time.")
+    parser.add_argument("-H", "--host", default='127.1:26657', help="Hostname or IP address of the node to check, e.g. 127.0.0.1:8841, domain.com:1234, default value is 127.1:26657")
+    parser.add_argument("-t", "--delta", "--delay", type=int, default=30, help="Time Delay (Delta) between server's time and latest block time, default value is 30")
+    parser.add_argument("-p", "--peers", type=int, default=3, help="Minimal amount of connected peers, default value is 3")
     args = parser.parse_args()
-    if args.host is None:
-        print ("Server is not set, exiting.")
-        sys.exit(2)
-    if args.delta is None:
-        args.delta = 30
     return args
 
 def get_status(host):
@@ -53,7 +49,7 @@ def main():
     state=f'Voting power: {votingpower}, Latest block: {latest_block_height}, Latest block time: {latest_block_time}, delta: {delta}, Peers connected: {npeers}'
     npeersstate=f'Only {npeers} peers connected!, '
 
-    if npeers <= 3:
+    if npeers < args.peers:
         print("CRITICAL - Status: " + npeersstate + state)
         sys.exit(2)
     elif delta.seconds >= delay:

@@ -37,23 +37,21 @@ def main():
     args = parse_args()
     status = get_status(args.host)
     netinfo = get_netinfo(args.host)
-    delay = args.delta
 
     npeers=int(netinfo['result']['n_peers'])
     latest_block_time=dateutil.parser.parse(datetime.strftime(dateutil.parser.parse(status['result']['sync_info']['latest_block_time']), '%Y-%m-%dT%H:%M:%S'))
     latest_block_height=status['result']['sync_info']['latest_block_height']
-    now = datetime.utcnow().replace(microsecond=0)
-    delta = now - latest_block_time
+    delta = datetime.utcnow().replace(microsecond=0) - latest_block_time
     state=f'Latest block: {latest_block_height}, Latest block time: {latest_block_time}, delta: {delta}, Peers connected: {npeers}'
     npeersstate=f'Only {npeers} peers connected!, '
 
     if npeers < args.peers:
         print("CRITICAL - Status: " + npeersstate + state)
         sys.exit(2)
-    elif delta.seconds >= delay:
+    elif delta.seconds >= args.delta:
         print("CRITICAL - Status: Delta is too big!, " + state)
         sys.exit(2)
-    elif delta.seconds < delay:
+    elif delta.seconds < args.delta:
         print("OK - Status: " + state)
         sys.exit(0)
     else:
